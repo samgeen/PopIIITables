@@ -1,0 +1,13 @@
+Tables from Lionel Hammerle
+For accretion at various rates
+Ignore time dependence, assume a 2D table in M, Mdot
+
+Here are the tables for Mdot=1e-5, 1e-4 and 1e-3 Msun/yr.
+The columns are:
+- the age in years
+- the current mass in Msun
+- the photospheric radius in log(R/Rsun)
+- the photospheric luminosity in log(L/Lsun)
+- the effective temperature in log(T[K])
+- the ionising flux in log(number of photons per second)
+- the Lyman-Werner flux in log(number of photons per second)

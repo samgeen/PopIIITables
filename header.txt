@@ -1,0 +1,1 @@
+age mass radius lum T NpHII NpLW
