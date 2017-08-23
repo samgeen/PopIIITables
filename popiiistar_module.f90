@@ -31,6 +31,10 @@ implicit none
 
 public
 
+public setup_popiii_tables
+
+integer,parameter::dp=kind(1.0D0) ! real*8  
+
 ! Tables for metal cooling with and without flux
 type(lookup_table) :: radius_table
 type(lookup_table) :: temperature_table
@@ -45,39 +49,40 @@ CONTAINS
 !************************************************************************
 ! Sets up the tables, and then clears them (e.g. on program exit)
 SUBROUTINE setup_popiii_tables(dir)
-  use amr_commons
   character(len=128)              ::dir,filename
-  filename = 'popiii_grid_radius.dat'
+  filename = TRIM(dir)//TRIM('popiii_grid_radius.dat')
   call setup_table(radius_table, filename)
-  filename = 'popiii_grid_T.dat'
+  filename = TRIM(dir)//TRIM('popiii_grid_T.dat')
   call setup_table(temperature_table, filename)
-  if (myid .eq. 1) write(*,*) "Set up Pop III stellar evolution tables"
+  write(*,*) "Set up Pop III stellar evolution tables"
 END SUBROUTINE setup_popiii_tables
+
+END MODULE
 
 SUBROUTINE popiii_lookup(accretion,mass,radius,temperature)
   ! Look up (radius, temperature) of a Pop III star based on its accretion rate and mass
   ! RETURNS
   ! 
 
+  use popiiistar_module
+
+  !integer,parameter::dp=kind(1.0D0) ! real*8  
   real(dp),intent(in)::accretion
   real(dp),intent(in)::mass
   real(dp),intent(out)::radius
   real(dp),intent(out)::temperature
   real(dp)::asolar,msolar
   
-  ! Convert input values from cgs to solar
-  asolar = accretion/solar_mass_per_year_cgs
-  msolar = mass/solar_mass_cgs
+  ! Convert input values (already in cgs, but accretion is in log units)
+  asolar = log10(accretion)
+  msolar = mass
   ! Read radius (output = solar radii)
   call find_value2(radius_table,     asolar,msolar,radius)
   ! Read temperature (output = log10(K))
   call find_value2(temperature_table,asolar,msolar,temperature)
-  ! Convert output values to cgs
-  radius = radius*solar_radius_cgs
+  ! Convert output to linear cgs
+  radius = 10d0**radius * solar_radius_cgs
   temperature = 10d0**temperature
 
 
-END SUBROUTINE ssm_radiation
-
-
-END MODULE
+END SUBROUTINE popiii_lookup

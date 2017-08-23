@@ -4,9 +4,9 @@
 ! Sam Geen, June 2010
 MODULE lookup_table_module
 
-  use amr_parameters
-
   implicit none
+
+  integer,parameter::dp=kind(1.0D0) ! real*8  
 
   private   ! default
 
@@ -53,7 +53,6 @@ END SUBROUTINE setup_table
 ! Reads the table
 ! This isn't public. We shouldn't need to read unless the code says so.
 SUBROUTINE read_table(table)
-  use amr_commons
   type(lookup_table) :: table
   integer*4          :: s1, s2, s3, s4
   logical            :: ok
@@ -63,11 +62,9 @@ SUBROUTINE read_table(table)
           write(*,*)"Reading lookup table "//TRIM(table%filename)
      inquire(file=TRIM(table%filename), exist=ok)
      if(.not. ok)then
-        if(myid.eq.1) then 
-           write(*,*)'Cannot read file...'
-           write(*,*)'File '//TRIM(table%filename)//' not found'
-        endif
-        call clean_stop
+        write(*,*)'Cannot read file...'
+        write(*,*)'File '//TRIM(table%filename)//' not found'
+        stop
      end if
      open(unit=1336,file=TRIM(table%filename),form='unformatted')
      ! Read the table's number of dimensions (can be up to 4)

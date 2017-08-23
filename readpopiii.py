@@ -73,7 +73,13 @@ class PopIIIReader(object):
         grida, gridm = np.meshgrid(newaccs,newmasses)
         newgrid = scipy.interpolate.griddata(points,values,(grida,gridm),
                                              method=interporder)
-        return 10.0**newaccs, newmasses, newgrid
+        newgrid[np.isnan(newgrid)] = 0.0
+        # Print diagnostic info
+        print "Outputting grid"
+        print "log Accretion from",newaccs.min(),"to",newaccs.max()
+        print "Masses from",newmasses.min(),"to",newmasses.max()
+        print "Grid values from",newgrid.min(),"to",newgrid.max()
+        return newaccs, newmasses, newgrid
 
     def VarFromTables(self,varname):
         '''
@@ -112,13 +118,15 @@ class PopIIIReader(object):
 
     def Make2DTables(self,varname):
         acc,mass,vals = self.Make2DGrid(varname)
-        # Convert units to linear cgs
-        acc *= Msun/year
+        # Convert units to cgs (log for acc)
+        acc += np.log10(Msun/year)
         mass *= Msun
-        if varname == "radius":
-            vals = 10.0**vals * Rsun # log(R/Rsun) -> cm
-        if varname == "T":
-            vals = 10.0**vals # K
+        # Keep units in log to preserve scaling of interpolation
+        #if varname == "radius":
+        #    vals = 10.0**vals * Rsun # log(R/Rsun) -> cm
+        #if varname == "T":
+        #    vals = 10.0**vals # K
+        print "Converted table values to cgs"
         # Write Fortran file
         # Write as 4D table used by lookup_table_module.f90
         filename = "PopIII/popiii_grid_"+varname+".dat"
@@ -136,8 +144,9 @@ class PopIIIReader(object):
         f.write_record(dum.astype(np.float64))
         f.write_record(dum.astype(np.float64))
         # Values in ND table
-        f.write_record(vals.astype(np.float64))
+        f.write_record(vals.astype(np.float64).T)
         f.close()
+        print "---"
         
     def Plot2DGrid(self,varname):
         acc,mass,vals = self.Make2DGrid(varname)
