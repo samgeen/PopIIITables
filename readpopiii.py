@@ -120,10 +120,22 @@ class PopIIIReader(object):
         if varname == "T":
             vals = 10.0**vals # K
         # Write Fortran file
+        # Write as 4D table used by lookup_table_module.f90
         filename = "PopIII/popiii_grid_"+varname+".dat"
+        ndim = np.array([2])
+        sizes = np.array([len(acc),len(mass),1,1,])
+        dum = np.array([1.0])
         f = scipy.io.FortranFile(filename,"w")
+        # Dimensions
+        f.write_record(ndim.astype(np.int32))
+        # Sizes of arrays
+        f.write_record(sizes.astype(np.int32))
+        # Array axes
         f.write_record(acc.astype(np.float64))
         f.write_record(mass.astype(np.float64))
+        f.write_record(dum.astype(np.float64))
+        f.write_record(dum.astype(np.float64))
+        # Values in ND table
         f.write_record(vals.astype(np.float64))
         f.close()
         
