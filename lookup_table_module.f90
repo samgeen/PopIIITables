@@ -274,6 +274,11 @@ SUBROUTINE bilin_interpolate(table, v1, v2, outval)
   ! Get length along axes
   x1 = (v1t - table%axis1(i1)) / (table%axis1(i1+1) - table%axis1(i1))
   y1 = (v2t - table%axis2(i2)) / (table%axis2(i2+1) - table%axis2(i2))
+  ! Clamp x,y to inside the range (prevent massive extrapolation at table borders)
+  x1 = MAX(x1,0d0)
+  x1 = MIN(x1,1d0)
+  y1 = MAX(y1,0d0)
+  y1 = MIN(y1,1d0)
   x0 = 1d0-x1
   y0 = 1d0-y1
 

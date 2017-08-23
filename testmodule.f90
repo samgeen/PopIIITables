@@ -70,13 +70,13 @@ SUBROUTINE output_track(accretion)
   character(len=200)::filename
   real(dp),dimension(nt)::ms,rs,ts
   ! Set up file
-  write(astr,'(F10.3)') accretion
+  write(astr,'(F10.6)') accretion
   call replace_text(astr," ","0",tmp)
   call replace_text(tmp,".","p",astr)
   filename="../track"//TRIM(astr)//".dat"
   open(ilun,file=filename,form="unformatted")
   ! Read data
-  mmax = 1d2*solar_mass_cgs
+  mmax = 80d0*solar_mass_cgs
   write(*,*) accretion
   acc = accretion*solar_mass_per_year_cgs
   do i=1,nt

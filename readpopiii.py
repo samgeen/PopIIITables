@@ -71,9 +71,45 @@ class PopIIIReader(object):
         newaccs = np.linspace(np.log10(amin),np.log10(amax),naccs)
         newmasses = np.linspace(mmin,mmax,nmasses)
         grida, gridm = np.meshgrid(newaccs,newmasses)
+        # Interpolate based on random point grid (bad)
         newgrid = scipy.interpolate.griddata(points,values,(grida,gridm),
                                              method=interporder)
         newgrid[np.isnan(newgrid)] = 0.0
+
+        # Interpolate based on resampling each accretion line first
+        newgrid *= 0
+        newlines = []
+        oldaccs = self.Tables().keys()
+        # Interpolate to fixed values on the mass axis
+        for acc, table in self.Tables().iteritems():
+            # Get new line of accretion rates
+            f = scipy.interpolate.interp1d(table[:,imass], table[:,ivar],
+                                           bounds_error=False,fill_value=0.0)
+            line = f(newmasses)
+            # Clamp values to lower and upper end
+            nonzero = np.where(line != 0.0)[0]
+            if line[0] == 0:
+                line[:nonzero[0]] = line[nonzero[0]]
+            if line[-1] == 0:
+                line[nonzero[-1]:] = line[nonzero[-1]]
+            newlines.append(line)
+        # Now interpolate along accretion axis
+        for inewmass in range(0,len(newmasses)):
+            line = []
+            for l in newlines:
+                line.append(l[inewmass])
+            line = np.array(line)
+            f = scipy.interpolate.interp1d(np.log10(oldaccs),line,
+                                           bounds_error=False,fill_value=0.0)
+            line = f(newaccs)
+            # Clamp values to lower and upper end
+            nonzero = np.where(line != 0.0)[0]
+            if line[0] == 0:
+                line[:nonzero[0]] = line[nonzero[0]]
+            if line[-1] == 0:
+                line[nonzero[-1]:] = line[nonzero[-1]]
+            newgrid[inewmass,:] = line
+
         # Print diagnostic info
         print "Outputting grid"
         print "log Accretion from",newaccs.min(),"to",newaccs.max()
@@ -144,7 +180,7 @@ class PopIIIReader(object):
         f.write_record(dum.astype(np.float64))
         f.write_record(dum.astype(np.float64))
         # Values in ND table
-        f.write_record(vals.astype(np.float64).T)
+        f.write_record(vals.astype(np.float64))
         f.close()
         print "---"
         
